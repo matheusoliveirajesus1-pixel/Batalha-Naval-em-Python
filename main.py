@@ -1,8 +1,10 @@
 import random
+import time
 
 class Tabuleiro:
 
     COLUNAS = "ABCDEFGHIJ"
+    QUANTIDADES_DE_BARCOS = 2
 
     def __init__(self):
         self.mapa = []
@@ -17,6 +19,36 @@ class Tabuleiro:
         for i in range(self.tamanho):
             texto += f"{i + 1:2} " + " ".join(self.mapa[i]) + "\n"
         return texto
+
+    def converter_coordenadas_para_texto(self, linha, coluna):
+        return f"{self.COLUNAS[coluna]}{linha + 1}"
+
+    def ler_coordenadas(self, mensagem):
+        while True:
+            entrada = input(mensagem).strip().upper()
+
+            if len(entrada) < 2 or len(entrada) > 3:
+                digitar("Coordenadas invalidas!")
+                continue
+
+            coluna = entrada[0]
+            linha = entrada[1:]
+
+            if coluna not in self.COLUNAS:
+                digitar("Coluna Invalida!")
+                continue
+
+            if not linha.isdigit():
+                digitar("Linha Invalida!")
+                continue
+
+            linha = int(linha)
+
+            if not 1 <= linha <= self.tamanho:
+                digitar("Linha fora do tabuleiro!")
+                continue
+
+            return linha -1, self.COLUNAS.index(coluna) 
     
     def mostrar_tabuleiro_oculto(self):
         texto = "   A B C D E F G H I J\n"
@@ -52,12 +84,11 @@ class Tabuleiro:
             return None
     
     def posicionar_barco_bot(self):
-
-        for _ in range(2): 
+        for _ in range(self.QUANTIDADES_DE_BARCOS): 
             while True:
-                letra = random.choice(self.COLUNAS)
-                linha_bot = random.randint(0, self.tamanho - 1)
-                if self.colocar_barco(linha_bot, self.transformar_coluna(letra)):
+                linha = random.randint(0, self.tamanho - 1)
+                coluna = random.randint(0, self.tamanho - 1)
+                if self.colocar_barco(linha, coluna):
                     break
             
     def colocar_barco(self, linha, coluna):
@@ -66,41 +97,20 @@ class Tabuleiro:
                 self.mapa[linha][coluna] = "B"
                 return True
             else:
-                print("Já existe um barco nessa posição!")
+                digitar("Já existe um barco nessa posição!")
                 return False
         else:
-            print("Posição Invalida!")
+            digitar("Posição Invalida!")
             return False
-    
-    def transformar_coluna(self, coluna):
-        while True:
-            coluna = coluna.upper()
-
-            if coluna in self.COLUNAS:
-                return self.COLUNAS.index(coluna)
-            else:
-                print("Coluna Invalida!")
-                coluna = input("Digite a Coluna: ")
     
     def posicionar_barco_jogador(self):
         print(self)
         while True:
-            colunas = input("Digite a coluna onde o barco vai ficar: ")
-            linhas = self.ler_linha_tabuleiro("Digite a linha onde o barco vai ficar: ")
-            if self.colocar_barco(linhas, self.transformar_coluna(colunas)):
+            linhas, colunas = self.ler_coordenadas("Digite a posição (EX: F7): ")
+
+            if self.colocar_barco(linhas, colunas):
                 print(self)
                 break
-    
-    def ler_linha_tabuleiro(self, mensagem):
-        while True:
-            try:
-                valor = int(input(mensagem))
-                if valor > 0 and valor <= self.tamanho:
-                    return valor - 1
-                else:
-                    print("Valor fora dos parametros!")
-            except ValueError:
-                print("Digite apenas numeros!")
 
 class Jogador():
     def __init__(self, nome ="", vitorias =0, derrotas =0):
@@ -131,58 +141,75 @@ def ler_int(mensagem):
         try:
             return int(input(mensagem))
         except ValueError:
-            print("\nDigite apenas Numeros!\n")
+            digitar("\nDigite apenas Numeros!\n")
+
+def digitar(texto, velocidade=0.05):
+    for letra in texto:
+        print(letra, end="", flush=True)
+        time.sleep(velocidade)
+    print()
 
 def turno_jogador(tabuleiro_bot):
     while True:
         print(tabuleiro_bot.mostrar_tabuleiro_oculto())
 
-        colunas = tabuleiro_bot.transformar_coluna(input("Digite a Coluna: ")) 
-        linhas = tabuleiro_bot.ler_linha_tabuleiro("Digite a Linha: ")
+        linhas, colunas = tabuleiro_bot.ler_coordenadas("Digite a posição (EX: F7): ")
         resultado = tabuleiro_bot.atacar(linhas, colunas)
-        
-        if resultado is True:
-            print("Você acertou um barco!")
-        elif resultado is False:
-             print("Água!")
 
-        elif resultado is None:
-            print("Você já atacou essa posição!")
+        if resultado is None:
+            digitar("Você já atacou essa posição!")
             continue
+    
+        print("\nAnalisando...")
+        time.sleep(1.5)
+
+        if resultado is True:
+            digitar("Você acertou um barco!")
+        elif resultado is False:
+            digitar("Água!")
+
         break
 
 def turno_bot(tabuleiro_jogador):
+    print("\nO Bot esta pensando..." )
+    time.sleep(2)
+
     while True:
         linhas = random.randint(0, tabuleiro_jogador.tamanho - 1)
-        letra = tabuleiro_jogador.transformar_coluna(random.choice(tabuleiro_jogador.COLUNAS))
-        
-        resultado = tabuleiro_jogador.atacar(linhas, letra)
+        coluna = random.randint(0, tabuleiro_jogador.tamanho - 1)
+
+        resultado = tabuleiro_jogador.atacar(linhas, coluna)
+
+        if resultado is None:
+            continue
+
+        digitar(f"O bot atacou {tabuleiro_jogador.converter_coordenadas_para_texto(linhas, coluna)}!")
        
         if resultado is True:
-            print("O Bot acertou um dos seus barcos!")
+            digitar("O Bot acertou um dos seus barcos!")
         elif resultado is False:
-            print("O Bot acertou a Água!")
-       
-        elif resultado is None:
-            continue
+            digitar("O Bot acertou a Água!")
+
         break
 
 def partida(tabuleiro_bot, tabuleiro_jogador, jogador):
     while True:
         turno_jogador(tabuleiro_bot)
+        print("===== TABULEIRO BOT =====")
         print(tabuleiro_bot.mostrar_tabuleiro_oculto())
         if tabuleiro_bot.barcos_restantes() == 0:
-            print("Parabens você ganhou o jogo")
+            digitar("Parabens você ganhou o jogo")
             jogador.vitorias += 1
             jogador.salvar_jogador()
             break
 
         turno_bot(tabuleiro_jogador)
+        time.sleep(1.5)
         print("===== SEU TABULEIRO =====")
         print(tabuleiro_jogador)
         if tabuleiro_jogador.barcos_restantes() == 0:
-            print("O Bot Ganhou a partida")
-            print("tabela dpo bot")
+            digitar("O Bot Ganhou a partida")
+            digitar("tabela do bot")
             print(tabuleiro_bot)
             jogador.derrotas += 1
             jogador.salvar_jogador()
@@ -201,7 +228,7 @@ except FileNotFoundError:
     jogador1.nome = nick
     jogador1.salvar_jogador()
 
-print(f"\nBem-Vindo {jogador1.nome} ao batalha Naval")
+digitar(f"\nBem-Vindo {jogador1.nome} ao batalha Naval", 0.08)
 while rodando:
     
     print("1 - Jogar")
@@ -218,20 +245,21 @@ while rodando:
             tabuleiro_bot = Tabuleiro()
 
             tabuleiro_bot.posicionar_barco_bot()
-            for _ in range(2):
+            for _ in range(tabuleiro_jogador.QUANTIDADES_DE_BARCOS):
                 tabuleiro_jogador.posicionar_barco_jogador()
             
-            print("Jogo iniciado")
+            digitar("Jogo iniciado")
+            time.sleep(1)
             partida(tabuleiro_bot, tabuleiro_jogador, jogador1)
         case 2:   
             print(jogador1)
         case 3:   
-            print("Regras")
+            digitar("Regras")
             #futuro codigo...
         case 4:   
-            print("Desenvolvedor: Sizer")
+            digitar("Desenvolvedor: Sizer")
         case 5:
-            print("Fechando Jogo...")
+            digitar("Fechando Jogo...")
             jogador1.salvar_jogador()
             rodando = False
         case _:        
