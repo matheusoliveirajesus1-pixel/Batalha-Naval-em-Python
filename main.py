@@ -1,6 +1,9 @@
 import random
 
 class Tabuleiro:
+
+    COLUNAS = "ABCDEFGHIJ"
+
     def __init__(self):
         self.mapa = []
         self.tamanho = 10
@@ -49,12 +52,11 @@ class Tabuleiro:
             return None
     
     def posicionar_barco_bot(self):
-        colunas = "ABCDEFGHIJ"
 
-        for _ in range(2):
+        for _ in range(2): 
             while True:
-                letra = random.choice(colunas)
-                linha_bot = random.randint(0, 9)
+                letra = random.choice(self.COLUNAS)
+                linha_bot = random.randint(0, self.tamanho - 1)
                 if self.colocar_barco(linha_bot, self.transformar_coluna(letra)):
                     break
             
@@ -73,10 +75,9 @@ class Tabuleiro:
     def transformar_coluna(self, coluna):
         while True:
             coluna = coluna.upper()
-            colunas = "ABCDEFGHIJ"
 
-            if coluna in colunas:
-                return colunas.index(coluna)
+            if coluna in self.COLUNAS:
+                return self.COLUNAS.index(coluna)
             else:
                 print("Coluna Invalida!")
                 coluna = input("Digite a Coluna: ")
@@ -111,18 +112,16 @@ class Jogador():
         return f"\n===== STATS =====\nJogador: {self.nome}\nVitorias: {self.vitorias}\nDerrotas: {self.derrotas}\n=================\n"
     
     def salvar_jogador(self):
-        arquivo = open("dados_jogador.txt", "w")
-        arquivo.write(self.nome + "\n")
-        arquivo.write(str(self.vitorias) + "\n")
-        arquivo.write(str(self.derrotas) + "\n")
-        arquivo.close()
+            with open("dados_jogador.txt", "w") as arquivo:
+                arquivo.write(self.nome + "\n")
+                arquivo.write(str(self.vitorias) + "\n")
+                arquivo.write(str(self.derrotas) + "\n")
         
     def carregar_jogador(self):
-        arquivo = open("dados_jogador.txt", "r")
-        self.nome = arquivo.readline().strip()
-        self.vitorias = int(arquivo.readline().strip())
-        self.derrotas = int(arquivo.readline().strip())
-        arquivo.close()
+        with open("dados_jogador.txt", "r") as arquivo:
+            self.nome = arquivo.readline().strip()
+            self.vitorias = int(arquivo.readline().strip())
+            self.derrotas = int(arquivo.readline().strip())
 
 
 
@@ -142,30 +141,29 @@ def turno_jogador(tabuleiro_bot):
         linhas = tabuleiro_bot.ler_linha_tabuleiro("Digite a Linha: ")
         resultado = tabuleiro_bot.atacar(linhas, colunas)
         
-        if resultado == True:
+        if resultado is True:
             print("Você acertou um barco!")
-        elif resultado == False:
+        elif resultado is False:
              print("Água!")
 
-        if resultado is None:
+        elif resultado is None:
             print("Você já atacou essa posição!")
             continue
         break
 
 def turno_bot(tabuleiro_jogador):
     while True:
-        colunas = "ABCDEFGHIJ"
-        linhas = random.randint(0, 9)
-        letra = tabuleiro_jogador.transformar_coluna(random.choice(colunas))
+        linhas = random.randint(0, tabuleiro_jogador.tamanho - 1)
+        letra = tabuleiro_jogador.transformar_coluna(random.choice(tabuleiro_jogador.COLUNAS))
         
         resultado = tabuleiro_jogador.atacar(linhas, letra)
        
-        if resultado == True:
-            print("O Bot acertou um dos seus barco!")
-        elif resultado == False:
-             print("O Bot acertou a Água!")
+        if resultado is True:
+            print("O Bot acertou um dos seus barcos!")
+        elif resultado is False:
+            print("O Bot acertou a Água!")
        
-        if resultado is None:
+        elif resultado is None:
             continue
         break
 
@@ -184,6 +182,8 @@ def partida(tabuleiro_bot, tabuleiro_jogador, jogador):
         print(tabuleiro_jogador)
         if tabuleiro_jogador.barcos_restantes() == 0:
             print("O Bot Ganhou a partida")
+            print("tabela dpo bot")
+            print(tabuleiro_bot)
             jogador.derrotas += 1
             jogador.salvar_jogador()
             break
@@ -233,7 +233,7 @@ while rodando:
         case 5:
             print("Fechando Jogo...")
             jogador1.salvar_jogador()
-            exit()
+            rodando = False
         case _:        
             print("Opção invalida")
 
