@@ -261,6 +261,7 @@ while rodando:
         case 5:
             digitar("Fechando Jogo...")
             jogador1.salvar_jogador()
+            time.sleep(0.5)
             rodando = False
         case _:        
             print("Opção invalida")
